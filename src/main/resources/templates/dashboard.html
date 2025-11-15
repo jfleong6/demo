@@ -20,8 +20,8 @@
 
                 <nav aria-label="Menú principal">
                     <ul>
-                        <li><a href="#">Productos</a></li>
                         <li><a href="#">Bodegas</a></li>
+                        <li><a href="#">Productos</a></li>
                         <li><a href="#">Entradas</a></li>
                         <li><a href="#">Salidas</a></li>
                         <li><a href="#">Transferencias</a></li>
@@ -40,10 +40,24 @@
             <header>
                 <h2>Productos por bodega</h2>
             </header>
-
-            <section id="productos-bodega" aria-labelledby="productos-bodega-titulo">
-                <!-- las tarjetas se crean automáticamente -->
+            <section class="bodegas">
+                <section id="productos-bodega" aria-labelledby="productos-bodega-titulo">
+                    <!-- las tarjetas se crean automáticamente -->
+                </section>
+                <section class="table-producto-bodega">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Id Prod</th>
+                                <th>Producto</th>
+                                <th>Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-productos-bodega"></tbody>
+                    </table>
+                </section>
             </section>
+
 
         </main>
 

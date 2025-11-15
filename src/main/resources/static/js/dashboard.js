@@ -1,9 +1,10 @@
 async function cargarProductosPorBodega(token) {
   try {
-    const response = await fetch("/api/dashboard-info-bodega",{ 
+    const response = await fetch("/api/dashboard-info-bodega", {
       headers: {
-      "Authorization": "Bearer " + token
-    }}
+        "Authorization": "Bearer " + token
+      }
+    }
     );
 
     if (!response.ok) {
@@ -21,16 +22,57 @@ async function cargarProductosPorBodega(token) {
       article.classList.add("card");
 
       article.innerHTML = `
-                <h3>${item.bodega}</h3>
-                <p class="count">${item.total_stock} productos</p>
-                <h5 class ="ciudad">${item.ciudad}</h5>
-            `;
+      <h3>${item.bodega}</h3>
+      <p class="count">${item.total_stock} productos</p>
+      <h5 class="ciudad">${item.ciudad}</h5>
+      <button class="btn-ver-productos" data-id="${item.id}">Ver productos</button>
+    `;
+
 
       contenedor.appendChild(article);
     });
+    document.querySelectorAll(".btn-ver-productos").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idBodega = btn.getAttribute("data-id");
+        cargarProductosDeBodega(idBodega, token);
+      });
+    });
+
 
   } catch (error) {
     console.error("No se pudo cargar la información:", error);
+  }
+}
+
+async function cargarProductosDeBodega(bodegaId, token) {
+  try {
+    const response = await fetch(`/api/bodega/${bodegaId}/productos`, {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Error al obtener productos de la bodega");
+    }
+
+    const data = await response.json();
+    const tbody = document.getElementById("tbody-productos-bodega");
+
+    tbody.innerHTML = "";
+
+    data.forEach(item => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item.id}</td>
+        <td>${item.nombre}</td>
+        <td>${item.stock}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
   }
 }
 
