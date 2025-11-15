@@ -47,6 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             jwt = authHeader.substring(7);
             try {
                 username = jwtUtil.extractUsername(jwt);
+                System.out.println("USERNAME = " + username);
             } catch (Exception e) {
                 System.out.println("Token inválido");
             }
