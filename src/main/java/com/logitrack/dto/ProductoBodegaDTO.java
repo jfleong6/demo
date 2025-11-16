@@ -12,7 +12,6 @@ public class ProductoBodegaDTO {
         this.stock = stock;
     }
 
-
     public Long getId() { return idProducto; }
     public String getNombre() { return nombre; }
     public int getStock() { return stock; }

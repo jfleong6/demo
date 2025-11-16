@@ -1,4 +1,12 @@
 var data;
+const acciones = {
+  "sec-bodegas": cargarProductosPorBodega,
+  "sec-productos": cargarProductos,
+  "sec-entradas": cargarEntradas,
+  "sec-salidas": cargarSalidas,
+  "sec-Transferencia": cargarTransferencias,
+  "sec-usuarios": cargarUsuarios
+};
 async function cargarProductosPorBodega(token) {
   try {
     const response = await fetch("/api/dashboard-info-bodega", {
@@ -7,7 +15,10 @@ async function cargarProductosPorBodega(token) {
         "Authorization": "Bearer " + token,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ data })
+      body: JSON.stringify({
+        usuario: data.username,
+        rol: data.rol
+      })
     });
 
     console.log(data);
@@ -69,7 +80,10 @@ async function cargarProductosDeBodega(bodegaId, token) {
         "Authorization": "Bearer " + token,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ data })
+      body: JSON.stringify({
+        usuario: data.nombre,
+        rol: data.rol
+      })
     });
 
     if (!response.ok) {
@@ -95,9 +109,77 @@ async function cargarProductosDeBodega(bodegaId, token) {
     console.error("Error:", error);
   }
 }
+async function cargarTodosLosProductos(token) {
+  try {
+    const response = await fetch("/api/productos-todos", {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Error al consultar productos");
+    }
+
+    let productos = await response.json();
+
+    // ordenar por id
+    productos = productos.sort((a, b) => a.id - b.id);
+
+    // guardarlos globalmente
+    listaProductos = productos;
+
+    // pintar la tabla completa
+    pintarTablaProductos(listaProductos);
+
+  } catch (error) {
+    console.error("Error:", error);
+    alert("No fue posible cargar los productos.");
+  }
+}
+
+function pintarTablaProductos(productos) {
+  const cuerpoTabla = document.getElementById("lista-productos");
+
+  // Limpiar tabla
+  cuerpoTabla.innerHTML = "";
+
+  // Llenar tabla
+  productos.forEach(prod => {
+    const fila = document.createElement("tr");
+
+    fila.innerHTML = `
+                <td>${prod.id}</td>
+                <td>${prod.nombre}</td>
+                <td>${prod.categoria}</td>
+                <td>${prod.stock_total}</td>
+            `;
+
+    cuerpoTabla.appendChild(fila);
+  });
+}
+
+
+function filtrarProductos() {
+  
+  const filtroNombre = document.getElementById("filtro-nombre").value.toLowerCase().trim();
+  
+  let productosFiltrados = listaProductos;
+
+  // filtro por nombre
+  if (filtroNombre !== "") {
+    productosFiltrados = productosFiltrados.filter(p =>
+      p.nombre.toLowerCase().includes(filtroNombre)
+    );
+  }
+
+  // vuelves a pintar la tabla
+  pintarTablaProductos(productosFiltrados);
+}
+
 
 async function cargarProductos(token) {
-  alert("cargarProductos");
+  cargarTodosLosProductos(token);
 }
 
 async function cargarEntradas(token) {
@@ -110,6 +192,9 @@ async function cargarSalidas(token) {
 
 async function cargarTransferencias(token) {
   alert("cargarTransferencias");
+}
+async function cargarUsuarios(token) {
+  alert("cargarUsuarios");
 }
 
 // Navegación y ejecución según sección
@@ -142,23 +227,14 @@ function iniciarNavegacion() {
 
       // Ejecutar la función correspondiente
       const token = sessionStorage.getItem("token");
-      switch (destino) {
-        case "sec-bodegas":
-          await cargarProductosPorBodega(token);
-          break;
-        case "sec-productos":
-          await cargarProductos(token);
-          break;
-        case "sec-entradas":
-          await cargarEntradas(token);
-          break;
-        case "sec-salidas":
-          await cargarSalidas(token);
-          break;
-        case "sec-Transferencia":
-          await cargarTransferencias(token);
-          break;
+
+      // Ejecutar función asociada a la sección
+      const accion = acciones[destino];
+      if (accion) {
+        await accion(token);
       }
+
+
     });
   });
 }
@@ -181,8 +257,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       headers: {
         "Authorization": "Bearer " + token,
         "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ data })
+      }
     });
 
     if (!res.ok) throw new Error("No autorizado");
@@ -200,4 +275,45 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   iniciarNavegacion();
   await cargarProductosPorBodega(token);
+  // Mostrar elementos del menú solo para admin
+  if (data.rol === "ADMIN") {
+    document.querySelectorAll("li.oculto").forEach(li => {
+      li.classList.remove("oculto");
+    });
+  }
+
 });
+document.getElementById("btn-filtrar").addEventListener("click", filtrarProductos);
+document.getElementById("filtro-nombre").addEventListener("keyup", filtrarProductos);
+
+
+
+document.getElementById("btn-nuevo-producto").addEventListener("click", () => {
+  document.getElementById("modal-nuevo-producto").classList.remove("oculto");
+});
+
+document.getElementById("btn-cerrar-modal").addEventListener("click", () => {
+  document.getElementById("modal-nuevo-producto").classList.add("oculto");
+});
+
+
+document.getElementById("btn-guardar-producto").addEventListener("click", guardarNuevoProducto);
+
+async function guardarNuevoProducto() {
+  const nombre = document.getElementById("nuevo-nombre").value.trim();
+  const categoria = document.getElementById("nuevo-categoria").value;
+  const precio = document.getElementById("nuevo-precio").value;
+
+  if (!nombre || !categoria || !precio) {
+    alert("Todos los campos son obligatorios.");
+    return;
+  }
+
+  const nuevo = {
+    nombre,
+    categoria,
+    precio
+  };
+
+  console.log("Producto listo para enviar al backend:", nuevo);
+}

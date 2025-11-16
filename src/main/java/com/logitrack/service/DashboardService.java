@@ -16,20 +16,34 @@ public class DashboardService {
                 this.jdbc = jdbc;
         }
 
-        public Map<String, Object> obtenerDashboardInfo() {
-
+        public Map<String, Object> obtenerDashboardInfo(String usuario, String rol) {
                 Map<String, Object> respuesta = new HashMap<>();
+                List<Map<String, Object>> stockPorBodega;
 
-                // Stock por bodega (corregido)
-                List<Map<String, Object>> stockPorBodega = jdbc.queryForList(
-                                "SELECT b.id, b.nombre AS bodega, b.ubicacion AS ciudad, SUM(pb.stock) AS total_stock "
-                                                +
-                                                "FROM producto_bodega pb " +
-                                                "JOIN bodega b ON b.id = pb.bodega_id " +
-                                                "GROUP BY b.id, b.nombre, b.ubicacion " +
-                                                "ORDER BY b.nombre");
+                if (rol.equalsIgnoreCase("admin")) {
+                        stockPorBodega = jdbc.queryForList(
+                                        "SELECT b.id, b.nombre AS bodega, b.ubicacion AS ciudad, SUM(pb.stock) AS total_stock "
+                                                        +
+                                                        "FROM producto_bodega pb " +
+                                                        "JOIN bodega b ON b.id = pb.bodega_id " +
+                                                        "GROUP BY b.id, b.nombre, b.ubicacion " +
+                                                        "ORDER BY b.nombre");
+                } else {
+                        stockPorBodega = jdbc.queryForList(
+                                        "SELECT b.id, b.nombre AS bodega, b.ubicacion AS ciudad, SUM(pb.stock) AS total_stock "
+                                                        +
+                                                        "FROM producto_bodega pb " +
+                                                        "JOIN bodega b ON b.id = pb.bodega_id " +
+                                                        "JOIN empleado_bodega eb ON eb.bodega_id = b.id " +
+                                                        "JOIN usuario u ON u.id = eb.empleado_id " +
+                                                        "WHERE u.username = ? " +
+                                                        "GROUP BY b.id, b.nombre, b.ubicacion " +
+                                                        "ORDER BY b.nombre",
+                                        usuario);
+                }
+
                 respuesta.put("stockPorBodega", stockPorBodega);
-
+                System.out.println(respuesta);
                 return respuesta;
         }
 }
